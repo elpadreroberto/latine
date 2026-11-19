@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Latine: juego para reconocer los seis casos y las cinco declinaciones del latín.">
+  <title>Latine — casos latinos</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23101828'/%3E%3Ctext x='32' y='40' text-anchor='middle' font-size='16' font-family='serif' fill='%23e6b35a'%3ESPQR%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <div class="pagina">
+    <header class="cabecera">
+      <div class="identidad">
+        <div class="spqr" aria-hidden="true">SPQR</div>
+        <div>
+          <h1>Latine</h1>
+          <p id="estado">Cargando el vocabulario…</p>
+        </div>
+      </div>
+      <div class="controles">
+        <button type="button" class="boton" id="btn-sonido" data-accion="sonido" aria-pressed="false">Silencio</button>
+        <button type="button" class="boton" id="btn-tabla" data-accion="tabla" hidden>Tabla</button>
+        <button type="button" class="boton" id="btn-pausa" data-accion="pausa" hidden>Pausa</button>
+        <button type="button" class="boton" id="btn-reiniciar" data-accion="reiniciar" hidden>Otra vez</button>
+        <button type="button" class="boton" id="btn-menu" data-accion="menu" hidden>Menú</button>
+      </div>
+      <div class="puntuacion" aria-label="Marcador">
+        <div><span>Puntos</span><strong id="puntos">0</strong></div>
+        <div><span>Racha</span><strong id="racha">0</strong></div>
+        <div id="caja-vidas" hidden><span>Vidas</span><strong id="vidas">3</strong></div>
+      </div>
+    </header>
+
+    <section id="vista-menu">
+      <p class="intro">Una forma baja. Tú pulsas el caso: 1 nominativo, 2 vocativo, 3 acusativo, 4 genitivo, 5 dativo, 6 ablativo. El <kbd>0</kbd>, antes del número, pide el plural.</p>
+      <p class="intro suave">El macrón cuenta: <span class="latin" lang="la">gradus</span> y <span class="latin" lang="la">gradūs</span> no son la misma forma. Si abres la tabla, el tiempo se detiene y la respuesta no queda marcada.</p>
+      <p id="carga" class="carga">Cargando las 450 palabras…</p>
+      <div class="rejilla">
+        <aside class="panel">
+          <h2>Esquema</h2>
+          <ul id="esquema" class="esquema"></ul>
+        </aside>
+        <div>
+          <div id="menu-niveles"></div>
+        </div>
+      </div>
+      <p class="pie">Las formas salen de <span class="latin">vocabulario.json</span>: 90 sustantivos por declinación. Los paradigmas se usan tal como están en ese archivo.</p>
+    </section>
+
+    <section id="vista-juego" hidden>
+      <p id="aviso" class="aviso" role="status"></p>
+      <div id="ayuda" class="ayuda" hidden></div>
+      <div id="arena" class="arena">
+        <div id="ficha" class="ficha">
+          <div id="ficha-palabra" class="ficha-palabra latin" lang="la"></div>
+          <div id="ficha-pista" class="ficha-pista" hidden></div>
+        </div>
+        <div class="tiempo" aria-hidden="true"><span id="tiempo-fill"></span></div>
+        <div id="velo-pausa" class="velo" hidden>
+          <div id="pausa-simple" class="dialogo">
+            <h2>En pausa</h2>
+            <p>La palabra espera. Pulsa continuar cuando quieras.</p>
+            <button type="button" class="boton principal" data-accion="continuar">Continuar</button>
+          </div>
+          <div id="pausa-tabla" class="dialogo dialogo-tabla" hidden></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="vista-consulta" hidden>
+      <div class="filtros">
+        <label>Buscar
+          <input id="buscar" type="search" placeholder="Latín o español" autocomplete="off" autocapitalize="off" spellcheck="false">
+        </label>
+        <label>Declinación
+          <select id="filtro-decl">
+            <option value="0">Todas</option>
+            <option value="1">1.ª</option>
+            <option value="2">2.ª</option>
+            <option value="3">3.ª</option>
+            <option value="4">4.ª</option>
+            <option value="5">5.ª</option>
+          </select>
+        </label>
+        <label>Género
+          <select id="filtro-gen">
+            <option value="">Todos</option>
+            <option value="m">Masculino</option>
+            <option value="f">Femenino</option>
+            <option value="n">Neutro</option>
+          </select>
+        </label>
+        <button type="button" class="boton" data-accion="menu">Volver</button>
+      </div>
+      <p id="consulta-cuenta"></p>
+      <div id="consulta-lista" class="lista"></div>
+    </section>
+
+    <section id="vista-resultado" hidden>
+      <div id="resultado-cuerpo" class="dialogo resultado"></div>
+    </section>
+
+    <footer id="teclado" hidden>
+      <div class="barra-plural" id="barra-plural">
+        <span>El plural: pulsa <kbd>0</kbd> y después el caso. Sin el 0 vale el singular o el plural.</span>
+        <button type="button" class="boton" id="btn-plural" data-accion="plural" aria-pressed="false">Plural: no</button>
+      </div>
+      <div id="teclas" class="teclas"></div>
+      <p class="atajos">Teclas <kbd>1</kbd> a <kbd>6</kbd>. <kbd>0</kbd> plural. <kbd>Espacio</kbd> pausa. <kbd>Esc</kbd> menú.</p>
+    </footer>
+  </div>
+  <script src="juego.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
