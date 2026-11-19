@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Latine: juego para reconocer los seis casos y las cinco declinaciones del latín.">
+  <meta name="description" content="Latine: reconoce el caso de una forma latina o declina la palabra que pide el diccionario.">
   <title>Latine — casos latinos</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23101828'/%3E%3Ctext x='32' y='40' text-anchor='middle' font-size='16' font-family='serif' fill='%23e6b35a'%3ESPQR%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,7 +22,13 @@
         </div>
       </div>
       <div class="controles">
+        <div class="velocidad" role="group" aria-label="Velocidad de caída">
+          <button type="button" class="boton vel" data-accion="velocidad" data-vel="lento">Lento</button>
+          <button type="button" class="boton vel" data-accion="velocidad" data-vel="medio">Medio</button>
+          <button type="button" class="boton vel" data-accion="velocidad" data-vel="rapido">Rápido</button>
+        </div>
         <button type="button" class="boton" id="btn-sonido" data-accion="sonido" aria-pressed="false">Silencio</button>
+        <button type="button" class="boton" id="btn-ayuda" data-accion="ayuda" hidden aria-pressed="false">Ayuda</button>
         <button type="button" class="boton" id="btn-tabla" data-accion="tabla" hidden>Tabla</button>
         <button type="button" class="boton" id="btn-pausa" data-accion="pausa" hidden>Pausa</button>
         <button type="button" class="boton" id="btn-reiniciar" data-accion="reiniciar" hidden>Otra vez</button>
@@ -36,8 +42,9 @@
     </header>
 
     <section id="vista-menu">
-      <p class="intro">Una forma baja. Tú pulsas el caso: 1 nominativo, 2 vocativo, 3 acusativo, 4 genitivo, 5 dativo, 6 ablativo. El <kbd>0</kbd>, antes del número, pide el plural.</p>
-      <p class="intro suave">El macrón cuenta: <span class="latin" lang="la">gradus</span> y <span class="latin" lang="la">gradūs</span> no son la misma forma. Si abres la tabla, el tiempo se detiene y la respuesta no queda marcada.</p>
+      <p class="intro">Fase 1: baja una forma y pulsas el caso. 1 nominativo, 2 vocativo, 3 acusativo, 4 genitivo, 5 dativo, 6 ablativo. El <kbd>0</kbd>, antes del número, pide el plural.</p>
+      <p class="intro">Fase 2: baja la palabra como en el diccionario y el caso que te piden. La escribes, o la eliges entre doce teclas. 1–6 singular. 7, 8, 9, 0, − y + plural.</p>
+      <p class="intro suave">En la fase 1 el macrón cuenta: <span class="latin" lang="la">gradus</span> y <span class="latin" lang="la">gradūs</span> no son la misma forma. Al escribir en la fase 2 puedes omitirlo. La tabla detiene el tiempo y no marca la respuesta. La ayuda, si la abres, sí señala la forma que cae.</p>
       <p id="carga" class="carga">Cargando las 450 palabras…</p>
       <div class="rejilla">
         <aside class="panel">
@@ -45,6 +52,10 @@
           <ul id="esquema" class="esquema"></ul>
         </aside>
         <div>
+          <div class="fases" role="group" aria-label="Fase de juego">
+            <button type="button" id="btn-fase-1" class="boton activo" data-accion="fase" data-fase="1">Fase 1 · reconocer</button>
+            <button type="button" id="btn-fase-2" class="boton" data-accion="fase" data-fase="2">Fase 2 · declinar</button>
+          </div>
           <div id="menu-niveles"></div>
         </div>
       </div>
@@ -67,6 +78,7 @@
             <button type="button" class="boton principal" data-accion="continuar">Continuar</button>
           </div>
           <div id="pausa-tabla" class="dialogo dialogo-tabla" hidden></div>
+          <div id="pausa-bloque" class="dialogo" hidden></div>
         </div>
       </div>
     </section>
@@ -109,8 +121,14 @@
         <span>El plural: pulsa <kbd>0</kbd> y después el caso. Sin el 0 vale el singular o el plural.</span>
         <button type="button" class="boton" id="btn-plural" data-accion="plural" aria-pressed="false">Plural: no</button>
       </div>
+      <form id="forma-fase2" class="forma-fase2" hidden>
+        <label class="escrito-etiqueta" for="escrito">Escribe la forma</label>
+        <input id="escrito" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Forma completa o desinencia: terrarum, arum" lang="la">
+        <button type="submit" class="boton principal">Comprobar</button>
+      </form>
       <div id="teclas" class="teclas"></div>
-      <p class="atajos">Teclas <kbd>1</kbd> a <kbd>6</kbd>. <kbd>0</kbd> plural. <kbd>Espacio</kbd> pausa. <kbd>Esc</kbd> menú.</p>
+      <div id="teclas-fase2" class="teclas-fase2" hidden></div>
+      <p id="atajos" class="atajos">Teclas <kbd>1</kbd> a <kbd>6</kbd>. <kbd>0</kbd> plural. <kbd>Espacio</kbd> pausa. <kbd>Esc</kbd> menú.</p>
     </footer>
   </div>
   <script src="juego.js"></script>

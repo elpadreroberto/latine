@@ -6,13 +6,13 @@ Página: https://elpadreroberto.github.io/latine/
 
 ## Cómo jugar
 
-1. Elige **Los seis casos** o un nivel de una declinación.
-2. Una forma baja. Pulsa el caso: 1 nominativo, 2 vocativo, 3 acusativo, 4 genitivo, 5 dativo, 6 ablativo.
-3. Las teclas de arriba son 4, 5 y 6. Las de abajo son 1, 2 y 3.
-4. El **0** antes del número pide el plural. Sin el 0, vale el singular o el plural.
-5. El macrón cuenta: *gradus* y *gradūs* no son la misma forma.
-6. **Tabla** detiene el tiempo y muestra el paradigma, sin marcar la respuesta.
-7. En las declinaciones hay 3 vidas. Cada tiempo agotado quita una.
+1. Elige la fase. **Reconocer**: baja una forma y pulsas el caso. **Declinar**: baja la entrada del diccionario y el caso que te piden.
+2. En la fase 1, las teclas son 1 nominativo, 2 vocativo, 3 acusativo, 4 genitivo, 5 dativo, 6 ablativo. Arriba van 4, 5 y 6. Abajo, 1, 2 y 3.
+3. En la fase 1, el **0** antes del número pide el plural. Sin el 0, vale el singular o el plural.
+4. En la fase 2 escribes la forma completa o solo la desinencia. También puedes pulsar una de las doce teclas: 1–6 singular; 7, 8, 9, 0, − y + plural. Escribir suma dos puntos. La tecla suma uno. Al escribir, el macrón no hace falta.
+5. En la fase 1 el macrón cuenta: *gradus* y *gradūs* no son la misma forma.
+6. **Lento**, **Medio** y **Rápido** cambian la caída. **Tabla** detiene el tiempo y no marca la respuesta. **Ayuda** muestra el paradigma: en la fase 1 marca la forma; en la fase 2 la oculta.
+7. Los seis casos duran doce preguntas, sin vidas. Al terminar puedes seguir con otras doce. En las declinaciones hay 3 vidas. Cada tiempo agotado quita una.
 
 La **consulta** abre las 450 palabras, con búsqueda en latín o en español. Puedes escribir sin macrones y sin tildes.
 

@@ -95,6 +95,23 @@ h1 {
 .boton.principal { background: var(--amber); color: var(--amber-ink); border-color: transparent; }
 .boton.activo { background: var(--amber); color: var(--amber-ink); border-color: transparent; }
 .boton[aria-pressed="true"] { border-color: var(--amber); color: var(--amber); }
+.velocidad {
+  display: flex;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-2);
+}
+.velocidad .boton {
+  border: 0;
+  background: transparent;
+  padding: .35rem .5rem;
+  border-radius: 10px;
+}
+.velocidad .boton.activo { background: var(--amber); color: var(--amber-ink); }
+.fases { display: grid; grid-template-columns: 1fr 1fr; gap: .45rem; margin-bottom: .7rem; }
+.fases .boton { font-weight: 700; }
+.fases .boton.activo { background: var(--amber); color: var(--amber-ink); border-color: transparent; }
 
 .puntuacion div {
   min-width: 4.4rem;
@@ -263,6 +280,12 @@ h1 {
   overflow-wrap: anywhere;
 }
 .ficha-pista { color: var(--amber); font-size: .85rem; margin-top: .15rem; }
+.ficha-pista.pedido {
+  color: var(--info);
+  font-family: "Source Serif 4", "Liberation Serif", "DejaVu Serif", Palatino, Georgia, serif;
+  font-size: clamp(1.15rem, 2.6vw, 1.7rem);
+  font-weight: 700;
+}
 .tiempo {
   position: absolute;
   left: .8rem;
@@ -306,6 +329,7 @@ table { width: 100%; border-collapse: collapse; font-size: .95rem; }
 th, td { padding: .32rem .4rem; text-align: left; border-bottom: 1px solid var(--line); vertical-align: baseline; }
 thead th { color: var(--muted); font-size: .75rem; letter-spacing: .04em; text-transform: uppercase; }
 td.latin { font-size: 1.08rem; }
+td.marca, th.marca { background: rgba(230, 179, 90, .2); color: var(--amber); font-weight: 700; }
 .bloque-tabla { margin-bottom: .8rem; }
 .bloque-tabla h3 { margin: 0 0 .3rem; font-size: 1rem; font-weight: 600; }
 
@@ -336,6 +360,56 @@ td.latin { font-size: 1.08rem; }
 .tecla .signo { color: var(--muted); font-size: .95rem; }
 .tecla.ok { background: #14573a; }
 .tecla.mal { background: #6d2a38; }
+.forma-fase2 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  align-items: center;
+  margin-bottom: .5rem;
+  padding: .45rem;
+  border: 1px solid rgba(159, 208, 238, .45);
+  border-radius: 14px;
+  background: var(--bg-2);
+}
+.escrito-etiqueta {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+.forma-fase2 input {
+  flex: 1 1 12rem;
+  min-width: 0;
+  background: #0c1522;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: .55rem .7rem;
+  font-family: "Source Serif 4", "Liberation Serif", "DejaVu Serif", Palatino, Georgia, serif;
+  font-size: 1.05rem;
+}
+.teclas-fase2 { display: grid; grid-template-columns: repeat(6, 1fr); gap: .4rem; }
+.ranura {
+  min-height: 4.3rem;
+  padding: .35rem .3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .15rem;
+  text-align: center;
+}
+.ranura .clave {
+  font-family: ui-monospace, monospace;
+  font-weight: 700;
+  color: var(--amber);
+}
+.ranura.plural .clave { color: var(--info); }
+.ranura .corto { color: var(--muted); font-size: .72rem; }
+.ranura .forma { font-size: .95rem; line-height: 1.15; overflow-wrap: anywhere; }
+.ranura:disabled { opacity: .38; cursor: not-allowed; }
+.ranura.ok, .ranura.revelada { background: #14573a; border-color: var(--good); }
+.ranura.mal { background: #6d2a38; }
 .atajos { margin: .45rem 0 0; color: var(--muted); font-size: .82rem; }
 kbd {
   font-family: ui-monospace, monospace;
@@ -395,6 +469,8 @@ kbd {
   .arena { height: min(320px, 46vh); min-height: 220px; }
   .tecla { min-height: 4.1rem; }
   .tecla .nombre { font-size: .85rem; }
+  .teclas-fase2 { grid-template-columns: repeat(3, 1fr); }
+  .fases { grid-template-columns: 1fr; }
   #teclado {
     position: sticky;
     bottom: 0;

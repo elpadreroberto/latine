@@ -6,9 +6,16 @@ const AJUSTES = 'latine-ajustes-v1';
 const ORDEN_TECLAS = [4, 5, 6, 1, 2, 3];
 const LIMITE_LISTA = 40;
 
+const ATAJOS_FASE1 = 'Teclas 1 a 6. 0 plural. Espacio pausa. Esc menú.';
+const ATAJOS_FASE2 = '1–6 singular. 7 8 9 nominativo, vocativo y acusativo plural. 0 genitivo plural. − dativo plural. + ablativo plural. Espacio pausa. Esc menú.';
+const TECLAS_FASE2 = { '1': 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5, '7': 6, '8': 7, '9': 8, '0': 9, '-': 10, '−': 10, '+': 11, '=': 11 };
+
 const state = {
   palabras: null,
   vista: 'menu',
+  fase: 1,
+  velocidad: 'medio',
+  ayudaAbierta: false,
   decl: 0,
   sub: 1,
   mazo: [],
@@ -54,8 +61,13 @@ function escribir(clave, valor) {
 }
 
 function nombreNivel() {
-  if (state.decl === 0) return 'Los seis casos';
-  return state.decl + '.ª declinación · nivel ' + state.sub;
+  const base = state.decl === 0 ? 'Los seis casos' : state.decl + '.ª declinación · nivel ' + state.sub;
+  if (state.fase === 2) return 'Fase 2 · ' + base;
+  return base;
+}
+
+function claveMarca(decl, sub) {
+  return (state.fase === 2 ? '2-' : '') + decl + '-' + sub;
 }
 
 function mostrarVista(nombre) {
@@ -73,12 +85,43 @@ function mostrarVista(nombre) {
 
 function pintarControles() {
   const juego = state.vista === 'juego';
-  $('btn-pausa').hidden = !juego;
+  const enBloque = state.motivoPausa === 'bloque';
+  $('btn-pausa').hidden = !juego || enBloque;
   $('btn-reiniciar').hidden = !juego;
-  $('btn-tabla').hidden = !(juego && state.decl > 0);
+  $('btn-tabla').hidden = !(juego && state.decl > 0 && state.fase === 1);
+  $('btn-ayuda').hidden = !(juego && state.decl > 0);
   $('btn-menu').hidden = state.vista === 'menu';
   $('btn-pausa').textContent = state.pausa ? 'Continuar' : 'Pausa';
   $('btn-tabla').setAttribute('aria-pressed', state.pausa && state.motivoPausa === 'tabla' ? 'true' : 'false');
+  $('btn-ayuda').textContent = state.ayudaAbierta ? 'Ocultar ayuda' : 'Ayuda';
+  $('btn-ayuda').setAttribute('aria-pressed', state.ayudaAbierta ? 'true' : 'false');
+}
+
+function pintarVelocidad() {
+  document.querySelectorAll('[data-vel]').forEach(function (btn) {
+    btn.classList.toggle('activo', btn.dataset.vel === state.velocidad);
+    btn.setAttribute('aria-pressed', btn.dataset.vel === state.velocidad ? 'true' : 'false');
+  });
+}
+
+function pintarFases() {
+  $('btn-fase-1').classList.toggle('activo', state.fase === 1);
+  $('btn-fase-2').classList.toggle('activo', state.fase === 2);
+  $('btn-fase-1').setAttribute('aria-pressed', state.fase === 1 ? 'true' : 'false');
+  $('btn-fase-2').setAttribute('aria-pressed', state.fase === 2 ? 'true' : 'false');
+}
+
+function guardarAjustes() {
+  escribir(AJUSTES, { sonido: state.sonido, velocidad: state.velocidad, fase: state.fase });
+}
+
+function pintarTecladoModo() {
+  const fase2 = state.vista === 'juego' && state.fase === 2;
+  $('forma-fase2').hidden = !fase2;
+  $('teclas-fase2').hidden = !fase2;
+  $('teclas').hidden = fase2;
+  $('barra-plural').hidden = fase2 || state.decl === 0 || state.vista !== 'juego';
+  $('atajos').textContent = fase2 ? ATAJOS_FASE2 : ATAJOS_FASE1;
 }
 
 function pintarSonido() {
@@ -145,13 +188,29 @@ function tono(tipo) {
   }
 }
 
-function tablaHTML(palabra) {
+function celdaForma(forma, opciones) {
+  if (!forma) return '—';
+  if (opciones.ocultar) return '•••';
+  return Latine.escapar(forma);
+}
+
+function tablaHTML(palabra, opciones) {
+  opciones = opciones || {};
   const sg = palabra.formas && palabra.formas.singular;
   const pl = palabra.formas && palabra.formas.plural;
   const filas = Latine.CASOS.map(function (c) {
-    const a = sg && sg[c.key] ? Latine.escapar(sg[c.key]) : '—';
-    const b = pl && pl[c.key] ? Latine.escapar(pl[c.key]) : '—';
-    return '<tr data-caso="' + c.id + '"><th scope="row" class="c' + c.id + '">' + c.id + ' ' + Latine.escapar(c.name) + '</th><td class="latin" lang="la">' + a + '</td><td class="latin" lang="la">' + b + '</td></tr>';
+    const formaSg = sg && sg[c.key];
+    const formaPl = pl && pl[c.key];
+    const a = celdaForma(formaSg, opciones);
+    const b = celdaForma(formaPl, opciones);
+    const marcaFila = opciones.marcar && ((formaSg && formaSg === opciones.marcar) || (formaPl && formaPl === opciones.marcar));
+    const teclaPl = Latine.teclaDeIndice(c.id + 5);
+    const rotulo = opciones.ocultar
+      ? c.id + ' / ' + teclaPl + ' ' + Latine.escapar(c.name)
+      : c.id + ' ' + Latine.escapar(c.name);
+    const marcaSg = (opciones.marcar && formaSg === opciones.marcar) ? ' marca' : '';
+    const marcaPl = (opciones.marcar && formaPl === opciones.marcar) ? ' marca' : '';
+    return '<tr data-caso="' + c.id + '"><th scope="row" class="c' + c.id + (marcaFila ? ' marca' : '') + '">' + rotulo + '</th><td class="latin' + marcaSg + '" lang="la">' + a + '</td><td class="latin' + marcaPl + '" lang="la">' + b + '</td></tr>';
   }).join('');
   let extra = '';
   if (!pl) extra += '<p class="nota">Sin plural en el uso clásico.</p>';
@@ -168,7 +227,7 @@ function pintarAyuda() {
     return;
   }
   ayuda.hidden = false;
-  ayuda.innerHTML = state.item.palabras.map(function (w) {
+  const lineas = state.item.palabras.map(function (w) {
     const marcas = [];
     if (w.tema_i) marcas.push('tema en -i');
     if (w.sin_plural || !w.formas || !w.formas.plural) marcas.push('sin plural clásico');
@@ -177,6 +236,19 @@ function pintarAyuda() {
     const nota = w.notas ? '<br><span class="nota">' + Latine.escapar(w.notas) + '</span>' : '';
     return '<p><span class="latin" lang="la">' + Latine.escapar(w.lema) + ', ' + Latine.escapar(w.genitivo) + '</span> (' + Latine.generoCorto(w.genero) + ') ' + Latine.escapar(w.espanol) + extra + nota + '</p>';
   }).join('');
+  let tablas = '';
+  if (state.ayudaAbierta) {
+    const opciones = state.fase === 2
+      ? { ocultar: true }
+      : { marcar: state.item.forma };
+    const avisoAyuda = state.fase === 2
+      ? '<p class="nota">Las formas quedan ocultas. Las doce teclas sí las muestran.</p>'
+      : '<p class="nota">La forma que cae está marcada.</p>';
+    tablas = avisoAyuda + state.item.palabras.map(function (w) {
+      return '<div class="bloque-tabla">' + tablaHTML(w, opciones) + '</div>';
+    }).join('');
+  }
+  ayuda.innerHTML = lineas + tablas;
 }
 
 function pintarEsquema() {
@@ -194,13 +266,18 @@ function pintarTeclas() {
 
 function marcaDe(decl, sub) {
   const marcas = leer(MARCAS, {});
-  return Number(marcas[decl + '-' + sub] || 0);
+  return Number(marcas[claveMarca(decl, sub)] || 0);
 }
 
 function pintarMenu() {
   const niveles = $('menu-niveles');
   const mejorBase = marcaDe(0, 1);
-  let html = '<article class="base"><h3>Los seis casos</h3><p>Doce preguntas, sin vidas. Así aprendes el lugar de cada tecla. Arriba van 4, 5 y 6; abajo, 1, 2 y 3.</p><p><button type="button" class="boton principal" data-accion="empezar" data-decl="0" data-sub="1">Jugar' + (mejorBase ? ' · mejor ' + mejorBase : '') + '</button></p></article>';
+  let html = '';
+  if (state.fase === 1) {
+    html += '<article class="base"><h3>Los seis casos</h3><p>Doce preguntas, sin vidas. Así aprendes el lugar de cada tecla. Arriba van 4, 5 y 6; abajo, 1, 2 y 3. Al terminar puedes seguir con otras doce.</p><p><button type="button" class="boton principal" data-accion="empezar" data-decl="0" data-sub="1">Jugar' + (mejorBase ? ' · mejor ' + mejorBase : '') + '</button></p></article>';
+  } else {
+    html += '<article class="base"><h3>Declinar</h3><p>La ficha trae la entrada del diccionario y el caso. Escribe la forma, o la desinencia, o pulsa la tecla que la muestra. Escribir suma dos puntos. La tecla suma uno.</p></article>';
+  }
 
   if (!state.palabras) {
     niveles.innerHTML = html;
@@ -218,11 +295,13 @@ function pintarMenu() {
   html += titulos.map(function (info) {
     const botones = [1, 2, 3].map(function (sub) {
       const palabras = Latine.palabrasDelNivel(state.palabras, info.n, sub);
-      const mazo = Latine.armarMazo(state.palabras, info.n, sub);
+      const mazo = state.fase === 2
+        ? Latine.armarMazoFase2(state.palabras, info.n, sub)
+        : Latine.armarMazo(state.palabras, info.n, sub);
       const ronda = Latine.tamanoRonda(info.n, sub);
       const detalle = sub === 1
         ? palabras.map(function (w) { return Latine.escapar(w.lema); }).join(' · ')
-        : palabras.length + ' palabras · ' + mazo.length + ' formas';
+        : palabras.length + ' palabras · ' + mazo.length + (state.fase === 2 ? ' preguntas' : ' formas');
       const mejor = marcaDe(info.n, sub);
       return '<button type="button" class="nivel n' + sub + '" data-accion="empezar" data-decl="' + info.n + '" data-sub="' + sub + '"><strong>Nivel ' + sub + '</strong><small>' + ronda + ' preguntas</small><small class="latin">' + detalle + '</small>' + (mejor ? '<small>Mejor: ' + mejor + '</small>' : '') + '</button>';
     }).join('');
@@ -242,12 +321,22 @@ function medidaSuelo() {
   return suelo;
 }
 
+function factorVelocidad() {
+  if (state.velocidad === 'lento') return 0.55;
+  if (state.velocidad === 'rapido') return 1.55;
+  return 1;
+}
+
 function duracionSegundos() {
   let base = 7.5;
   if (state.decl > 0 && state.sub === 1) base = 8.5;
   if (state.decl > 0 && state.sub === 2) base = 6.5;
   if (state.decl > 0 && state.sub === 3) base = 5.2;
-  return Math.max(3.4, base - Math.min(state.racha * 0.18, 2.4));
+  let segundos = base - Math.min(state.racha * 0.18, 2.4);
+  if (state.fase === 2) segundos *= 1.25;
+  segundos /= factorVelocidad();
+  const suelo = state.velocidad === 'rapido' ? 2.2 : 3.4;
+  return Math.max(suelo, segundos);
 }
 
 function pintarTiempo(suelo) {
@@ -304,16 +393,41 @@ function bucle(ts) {
   state.frame = requestAnimationFrame(bucle);
 }
 
+function pintarTeclasFase2(item) {
+  $('teclas-fase2').innerHTML = Latine.RANURAS.map(function (ranura) {
+    const opt = item.opciones.find(function (o) { return o.indice === ranura.indice; });
+    const plural = ranura.numero === 'plural' ? ' plural' : '';
+    if (!opt) {
+      return '<button type="button" class="ranura' + plural + '" disabled><span class="clave">' + Latine.escapar(ranura.tecla) + '</span><span class="corto">' + Latine.escapar(ranura.corto) + '</span><span class="forma">—</span></button>';
+    }
+    return '<button type="button" class="ranura' + plural + '" data-accion="ranura" data-indice="' + ranura.indice + '"><span class="clave">' + Latine.escapar(ranura.tecla) + '</span><span class="corto">' + Latine.escapar(ranura.corto) + '</span><span class="forma latin" lang="la">' + Latine.escapar(opt.forma) + '</span></button>';
+  }).join('');
+}
+
+function enfocarEscrito() {
+  if (state.fase !== 2 || state.reducir) return;
+  if (!window.matchMedia('(min-width: 700px)').matches) return;
+  const campo = $('escrito');
+  if (campo && !campo.hidden && !$('forma-fase2').hidden) campo.focus();
+}
+
 function soltarSiguiente() {
   if (!state.cola.length) state.cola = Latine.barajar(state.mazo, state.ultima);
   const item = state.cola.shift();
   state.item = item;
-  state.ultima = item.forma;
+  state.ultima = item.firma || item.forma;
   state.plural = false;
   pintarPlural();
   $('ficha-palabra').textContent = item.forma;
   const pista = $('ficha-pista');
-  if (state.decl === 0) {
+  pista.classList.remove('pedido');
+  if (state.fase === 2) {
+    pista.hidden = false;
+    pista.classList.add('pedido');
+    pista.textContent = item.pista;
+    pintarTeclasFase2(item);
+    $('escrito').value = '';
+  } else if (state.decl === 0) {
     pista.hidden = false;
     pista.textContent = '¿Qué número es?';
   } else {
@@ -326,10 +440,11 @@ function soltarSiguiente() {
   pintarAyuda();
   pintarProgreso();
   pintarTiempo(medidaSuelo());
+  enfocarEscrito();
 }
 
 function guardarMarca() {
-  const clave = state.decl + '-' + state.sub;
+  const clave = claveMarca(state.decl, state.sub);
   const marcas = leer(MARCAS, {});
   const previa = Number(marcas[clave] || 0);
   const nueva = state.puntos > previa;
@@ -381,12 +496,27 @@ function cerrarPregunta(porTiempo) {
     terminarRonda('vidas');
     return;
   }
+  if (state.decl === 0 && state.hechas >= state.tamano && state.hechas % 12 === 0) {
+    mostrarBloque();
+    return;
+  }
   if (state.hechas >= state.tamano) {
     terminarRonda('ronda');
     return;
   }
   soltarSiguiente();
   reanudarBucle();
+}
+
+function mostrarBloque() {
+  state.pausa = true;
+  state.motivoPausa = 'bloque';
+  state.item = null;
+  pararBucle();
+  guardarMarca();
+  tono('ok');
+  $('estado').textContent = 'Doce preguntas hechas';
+  pintarOverlay();
 }
 
 function fallarPorTiempo() {
@@ -396,8 +526,12 @@ function fallarPorTiempo() {
   state.racha = 0;
   pintarMarcador();
   tono('mal');
-  const textos = Latine.textoCasos(item.entradas);
-  aviso('Se acabó el tiempo. Servía: ' + textos.join(', ') + '.', 'tiempo');
+  if (state.fase === 2) {
+    aviso('Se acabó el tiempo. Era ' + item.objetivo + ' (' + item.pista.toLowerCase() + ', tecla ' + item.tecla + ').', 'tiempo');
+  } else {
+    const textos = Latine.textoCasos(item.entradas);
+    aviso('Se acabó el tiempo. Servía: ' + textos.join(', ') + '.', 'tiempo');
+  }
   cerrarPregunta(true);
 }
 
@@ -410,6 +544,38 @@ function flashTecla(casoId, tipo) {
   setTimeout(function () { btn.classList.remove(tipo); }, 240);
 }
 
+function flashRanura(indice, tipo) {
+  const btn = document.querySelector('.ranura[data-indice="' + indice + '"]');
+  if (!btn) return;
+  btn.classList.remove('ok', 'mal', 'revelada');
+  void btn.offsetWidth;
+  btn.classList.add(tipo);
+  setTimeout(function () { btn.classList.remove(tipo); }, tipo === 'revelada' ? 800 : 240);
+}
+
+function sumarAcierto(base) {
+  state.item = null;
+  state.puntos += base;
+  state.racha += 1;
+  state.aciertos += 1;
+  if (state.racha > state.mejorRacha) state.mejorRacha = state.racha;
+  let extra = '';
+  if (state.racha % 5 === 0) {
+    state.puntos += 1;
+    extra = ' Racha de ' + state.racha + ': punto extra.';
+  }
+  pintarMarcador();
+  tono('ok');
+  return extra;
+}
+
+function anotarFallo() {
+  state.racha = 0;
+  state.fallosTecla += 1;
+  pintarMarcador();
+  tono('mal');
+}
+
 function sacudir() {
   if (state.reducir) return;
   const ficha = $('ficha');
@@ -419,24 +585,13 @@ function sacudir() {
 }
 
 function responder(casoId) {
-  if (!state.jugando || state.pausa || !state.item) return;
+  if (!state.jugando || state.pausa || !state.item || state.fase !== 1) return;
   const item = state.item;
   const fallo = Latine.juzgar(item, casoId, state.plural);
   state.plural = false;
   pintarPlural();
   if (fallo.vale) {
-    state.item = null;
-    state.puntos += 1;
-    state.racha += 1;
-    state.aciertos += 1;
-    if (state.racha > state.mejorRacha) state.mejorRacha = state.racha;
-    let extra = '';
-    if (state.racha % 5 === 0) {
-      state.puntos += 1;
-      extra = ' Racha de ' + state.racha + ': punto extra.';
-    }
-    pintarMarcador();
-    tono('ok');
+    const extra = sumarAcierto(1);
     flashTecla(casoId, 'ok');
     const numeros = new Set(item.entradas.filter(function (v) { return v.casoId === casoId; }).map(function (v) { return v.numero; }));
     let msg = 'Bien. +1.';
@@ -447,15 +602,51 @@ function responder(casoId) {
     cerrarPregunta(false);
     return;
   }
-  state.racha = 0;
-  state.fallosTecla += 1;
-  pintarMarcador();
-  tono('mal');
+  anotarFallo();
   flashTecla(casoId, 'mal');
   sacudir();
   const caso = Latine.CASOS[casoId - 1];
   if (fallo.soloSingular) aviso('No. El 0 pide plural, y ese caso aquí es singular.', 'mal');
   else aviso('No. El ' + casoId + ' es el ' + caso.name.toLowerCase() + '.', 'mal');
+}
+
+function responderRanura(indice) {
+  if (!state.jugando || state.pausa || !state.item || state.fase !== 2) return;
+  const item = state.item;
+  const elegida = item.opciones.find(function (o) { return o.indice === indice; });
+  if (!elegida) return;
+  if (Latine.juzgarRanura(item, indice)) {
+    const extra = sumarAcierto(1);
+    flashRanura(indice, 'ok');
+    aviso('Bien. +1. ' + item.objetivo + '.' + extra, 'ok');
+    cerrarPregunta(false);
+    return;
+  }
+  anotarFallo();
+  flashRanura(indice, 'mal');
+  flashRanura(item.indice, 'revelada');
+  sacudir();
+  aviso('No. Era ' + item.objetivo + ', tecla ' + item.tecla + '.', 'mal');
+}
+
+function responderEscrito(texto) {
+  if (!state.jugando || state.pausa || !state.item || state.fase !== 2) return;
+  const item = state.item;
+  const juicio = Latine.juzgarEscrito(item, texto);
+  if (!Latine.normalizarEscrito(texto)) return;
+  if (juicio.vale) {
+    const extra = sumarAcierto(2);
+    const como = juicio.completo ? 'La forma completa vale.' : 'La desinencia vale: ' + item.objetivo + '.';
+    aviso('Bien. +2. ' + como + extra, 'ok');
+    $('escrito').value = '';
+    cerrarPregunta(false);
+    return;
+  }
+  anotarFallo();
+  sacudir();
+  const pistaDes = juicio.desinencia ? ' También vale la desinencia ' + juicio.desinencia + '.' : '';
+  aviso('No. Era ' + item.objetivo + '.' + pistaDes, 'mal');
+  $('escrito').select();
 }
 
 function pintarPlural() {
@@ -469,6 +660,7 @@ function pintarOverlay() {
   const velo = $('velo-pausa');
   const simple = $('pausa-simple');
   const tabla = $('pausa-tabla');
+  const bloque = $('pausa-bloque');
   if (!state.pausa) {
     velo.hidden = true;
     pintarControles();
@@ -476,20 +668,25 @@ function pintarOverlay() {
   }
   velo.hidden = false;
   const esTabla = state.motivoPausa === 'tabla' && state.item;
-  simple.hidden = esTabla;
+  const esBloque = state.motivoPausa === 'bloque';
+  simple.hidden = esTabla || esBloque;
   tabla.hidden = !esTabla;
+  bloque.hidden = !esBloque;
   if (esTabla) {
     const bloques = state.item.palabras.map(function (w) {
       return '<div class="bloque-tabla"><h3><span class="latin" lang="la">' + Latine.escapar(w.lema) + ', ' + Latine.escapar(w.genitivo) + '</span> (' + Latine.generoCorto(w.genero) + ') — ' + Latine.escapar(w.espanol) + '</h3>' + tablaHTML(w) + '</div>';
     }).join('');
     tabla.innerHTML = '<p class="forma-grande latin" lang="la">' + Latine.escapar(state.item.forma) + '</p><p>Busca esta forma en la tabla. No está marcada. Luego continúa y pulsa el caso.</p>' + bloques + '<button type="button" class="boton principal" data-accion="continuar">Continuar</button>';
   }
+  if (esBloque) {
+    bloque.innerHTML = '<h2>Doce preguntas hechas</h2><p>Llevas ' + state.puntos + ' puntos. La racha es ' + state.racha + '.</p><p>Puedes seguir con otras doce o pasar a la primera declinación.</p><div class="acciones"><button type="button" class="boton principal" data-accion="seguir">Seguir con doce más</button><button type="button" class="boton" data-accion="siguiente">Ir a la 1.ª declinación</button><button type="button" class="boton" data-accion="menu">Menú</button></div>';
+  }
   pintarControles();
 }
 
 function pausar(opciones) {
   const forzar = opciones && opciones.forzar;
-  if (!state.jugando) return;
+  if (!state.jugando || state.motivoPausa === 'bloque') return;
   if (state.pausa && forzar) return;
   if (state.pausa) {
     reanudar();
@@ -523,11 +720,14 @@ function abrirTabla() {
 }
 
 function empezar(decl, sub) {
+  if (state.fase === 2 && decl === 0) return;
   if (decl > 0 && !state.palabras) return;
   pararBucle();
   state.decl = decl;
   state.sub = sub;
-  state.mazo = Latine.armarMazo(state.palabras || [], decl, sub);
+  state.mazo = state.fase === 2
+    ? Latine.armarMazoFase2(state.palabras || [], decl, sub)
+    : Latine.armarMazo(state.palabras || [], decl, sub);
   if (!state.mazo.length) return;
   state.cola = [];
   state.ultima = '';
@@ -550,7 +750,7 @@ function empezar(decl, sub) {
   $('aviso').textContent = '';
   $('aviso').className = 'aviso';
   mostrarVista('juego');
-  $('barra-plural').hidden = decl === 0;
+  pintarTecladoModo();
   pintarMarcador();
   pintarPlural();
   soltarSiguiente();
@@ -558,9 +758,24 @@ function empezar(decl, sub) {
   if (!state.reducir) $('arena').scrollIntoView({ block: 'center', behavior: 'smooth' });
 }
 
+function seguirPracticando() {
+  if (state.motivoPausa !== 'bloque') return;
+  state.tamano += 12;
+  state.pausa = false;
+  state.motivoPausa = '';
+  state.jugando = true;
+  $('velo-pausa').hidden = true;
+  mostrarVista('juego');
+  pintarTecladoModo();
+  soltarSiguiente();
+  reanudarBucle();
+}
+
 function irAlMenu() {
+  if (state.fase === 1 && state.decl === 0 && state.hechas >= 12) guardarMarca();
   state.jugando = false;
   state.pausa = false;
+  state.motivoPausa = '';
   state.item = null;
   pararBucle();
   $('velo-pausa').hidden = true;
@@ -575,6 +790,8 @@ function irAlMenu() {
 function abrirConsulta() {
   if (!state.palabras) return;
   state.jugando = false;
+  state.pausa = false;
+  state.motivoPausa = '';
   pararBucle();
   state.consultaDesde = 0;
   mostrarVista('consulta');
@@ -612,13 +829,41 @@ function alPulsar(accion, btn) {
   }
   if (accion === 'menu') { irAlMenu(); return; }
   if (accion === 'consulta') { abrirConsulta(); return; }
+  if (accion === 'fase') {
+    if (state.jugando) return;
+    state.fase = Number(btn.dataset.fase) === 2 ? 2 : 1;
+    guardarAjustes();
+    pintarFases();
+    pintarMenu();
+    return;
+  }
+  if (accion === 'velocidad') {
+    const vel = btn.dataset.vel;
+    if (vel !== 'lento' && vel !== 'medio' && vel !== 'rapido') return;
+    state.velocidad = vel;
+    guardarAjustes();
+    pintarVelocidad();
+    return;
+  }
+  if (accion === 'ayuda') {
+    if (!state.jugando || state.decl === 0) return;
+    state.ayudaAbierta = !state.ayudaAbierta;
+    pintarAyuda();
+    pintarControles();
+    return;
+  }
   if (accion === 'empezar') {
     empezar(Number(btn.dataset.decl), Number(btn.dataset.sub));
     return;
   }
   if (accion === 'pausa') { pausar(); return; }
   if (accion === 'continuar') { reanudar(); return; }
+  if (accion === 'seguir') { seguirPracticando(); return; }
   if (accion === 'tabla') { abrirTabla(); return; }
+  if (accion === 'ranura') {
+    responderRanura(Number(btn.dataset.indice));
+    return;
+  }
   if (accion === 'reiniciar') { empezar(state.decl, state.sub); return; }
   if (accion === 'siguiente') {
     const sig = Latine.siguienteNivel(state.decl, state.sub);
@@ -653,7 +898,15 @@ function escribiendo(e) {
 }
 
 function alTeclado(e) {
-  if (e.repeat || escribiendo(e)) return;
+  if (e.repeat) return;
+  if (escribiendo(e)) {
+    if (e.key === 'Escape' && state.vista === 'juego' && state.fase === 2 && $('escrito').value) {
+      e.preventDefault();
+      $('escrito').value = '';
+      return;
+    }
+    if (e.key !== 'Escape') return;
+  }
   if (e.key === 'Escape') {
     if (state.vista === 'consulta' && $('buscar').value) {
       $('buscar').value = '';
@@ -674,6 +927,13 @@ function alTeclado(e) {
     return;
   }
   if (state.pausa) return;
+  if (state.fase === 2) {
+    if (Object.prototype.hasOwnProperty.call(TECLAS_FASE2, e.key)) {
+      e.preventDefault();
+      responderRanura(TECLAS_FASE2[e.key]);
+    }
+    return;
+  }
   if (e.key === '0' && state.decl > 0) {
     e.preventDefault();
     state.plural = !state.plural;
@@ -708,10 +968,20 @@ function iniciar() {
   state.reducir = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const ajustes = leer(AJUSTES, {});
   state.sonido = !!ajustes.sonido;
+  if (ajustes.velocidad === 'lento' || ajustes.velocidad === 'medio' || ajustes.velocidad === 'rapido') {
+    state.velocidad = ajustes.velocidad;
+  }
+  if (ajustes.fase === 2) state.fase = 2;
   pintarSonido();
+  pintarVelocidad();
+  pintarFases();
   pintarEsquema();
   pintarTeclas();
   pintarMenu();
+  $('forma-fase2').addEventListener('submit', function (e) {
+    e.preventDefault();
+    responderEscrito($('escrito').value);
+  });
   document.body.addEventListener('click', function (e) {
     const btn = e.target.closest('[data-accion]');
     if (!btn) return;
