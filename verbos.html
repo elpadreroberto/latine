@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Latine: reconoce la persona de un verbo latino o escribe la forma que pide el enunciado.">
+  <title>Latine — verbos latinos</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23101828'/%3E%3Ctext x='32' y='40' text-anchor='middle' font-size='16' font-family='serif' fill='%23e6b35a'%3ESPQR%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <div class="pagina">
+    <header class="cabecera">
+      <div class="identidad">
+        <div class="spqr" aria-hidden="true">SPQR</div>
+        <div>
+          <h1>Latine</h1>
+          <nav class="materia" aria-label="Materia">
+            <a href="index.html">Sustantivos</a>
+            <a href="verbos.html" aria-current="page">Verbos</a>
+          </nav>
+          <p id="estado">Cargando los verbos…</p>
+        </div>
+      </div>
+      <div class="controles">
+        <div class="velocidad" role="group" aria-label="Velocidad de caída">
+          <button type="button" class="boton vel" data-accion="velocidad" data-vel="lento">Lento</button>
+          <button type="button" class="boton vel" data-accion="velocidad" data-vel="medio">Medio</button>
+          <button type="button" class="boton vel" data-accion="velocidad" data-vel="rapido">Rápido</button>
+        </div>
+        <button type="button" class="boton" id="btn-sonido" data-accion="sonido" aria-pressed="false">Silencio</button>
+        <button type="button" class="boton" id="btn-ayuda" data-accion="ayuda" hidden aria-pressed="false">Ayuda</button>
+        <button type="button" class="boton" id="btn-tabla" data-accion="tabla" hidden>Tabla</button>
+        <button type="button" class="boton" id="btn-pausa" data-accion="pausa" hidden>Pausa</button>
+        <button type="button" class="boton" id="btn-reiniciar" data-accion="reiniciar" hidden>Otra vez</button>
+        <button type="button" class="boton" id="btn-menu" data-accion="menu" hidden>Menú</button>
+      </div>
+      <div class="puntuacion" aria-label="Marcador">
+        <div><span>Puntos</span><strong id="puntos">0</strong></div>
+        <div><span>Racha</span><strong id="racha">0</strong></div>
+        <div id="caja-vidas" hidden><span>Vidas</span><strong id="vidas">3</strong></div>
+      </div>
+    </header>
+
+    <section id="vista-menu">
+      <p class="intro">Fase 1: baja una forma y pulsas la persona. 1 ego, 2 tū, 3 is/ea/id, 4 nōs, 5 vōs, 6 iī/eae/ea. Arriba van 4, 5 y 6. Abajo, 1, 2 y 3.</p>
+      <p class="intro">Fase 2: baja el enunciado y la persona que te piden. Escribes la forma, o la desinencia, o la eliges entre las seis teclas. Escribir suma dos puntos. La tecla suma uno.</p>
+      <p class="intro suave">Al escribir puedes omitir el macrón. En la ficha, el macrón cuenta. La tabla detiene el tiempo y no marca la persona. La ayuda, si la abres, sí señala la forma que cae. Los deponentes están guardados en la voz activa. Los intransitivos no traen pasiva personal.</p>
+      <p id="carga" class="carga">Cargando los 1000 verbos…</p>
+      <div class="rejilla">
+        <aside class="panel">
+          <h2>Personas</h2>
+          <ul id="esquema" class="esquema"></ul>
+        </aside>
+        <div>
+          <div class="fases" role="group" aria-label="Fase de juego">
+            <button type="button" id="btn-fase-1" class="boton activo" data-accion="fase" data-fase="1">Fase 1 · reconocer</button>
+            <button type="button" id="btn-fase-2" class="boton" data-accion="fase" data-fase="2">Fase 2 · conjugar</button>
+          </div>
+          <div class="filtros recorte">
+            <label>Voz
+              <select id="voz">
+                <option value="activa">Activa</option>
+                <option value="pasiva">Pasiva</option>
+              </select>
+            </label>
+            <label>Modo
+              <select id="modo">
+                <option value="indicativo">Indicativo</option>
+                <option value="subjuntivo">Subjuntivo</option>
+                <option value="imperativo">Imperativo</option>
+              </select>
+            </label>
+            <label>Tiempo
+              <select id="tiempo"></select>
+            </label>
+          </div>
+          <div id="menu-niveles"></div>
+        </div>
+      </div>
+      <p class="pie">Las formas salen de <span class="latin">verbos.json</span>: 1000 verbos, con el paradigma tal como está en ese archivo. No hay un grupo aparte de impersonales.</p>
+    </section>
+
+    <section id="vista-juego" hidden>
+      <p id="aviso" class="aviso" role="status"></p>
+      <div id="ayuda" class="ayuda" hidden></div>
+      <div id="arena" class="arena">
+        <div id="ficha" class="ficha">
+          <div id="ficha-palabra" class="ficha-palabra latin" lang="la"></div>
+          <div id="ficha-pista" class="ficha-pista" hidden></div>
+        </div>
+        <div class="tiempo" aria-hidden="true"><span id="tiempo-fill"></span></div>
+        <div id="velo-pausa" class="velo" hidden>
+          <div id="pausa-simple" class="dialogo">
+            <h2>En pausa</h2>
+            <p>La forma espera. Pulsa continuar cuando quieras.</p>
+            <button type="button" class="boton principal" data-accion="continuar">Continuar</button>
+          </div>
+          <div id="pausa-tabla" class="dialogo dialogo-tabla" hidden></div>
+          <div id="pausa-bloque" class="dialogo" hidden></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="vista-consulta" hidden>
+      <div class="filtros">
+        <label>Buscar
+          <input id="buscar" type="search" placeholder="Latín o español" autocomplete="off" autocapitalize="off" spellcheck="false">
+        </label>
+        <label>Grupo
+          <select id="filtro-grupo">
+            <option value="">Todos</option>
+            <option value="transitivos_1">Transitivos, 1.ª y 2.ª</option>
+            <option value="transitivos_2">Transitivos, 3.ª, mixta y 4.ª</option>
+            <option value="intransitivos">Intransitivos</option>
+            <option value="irregulares">Irregulares</option>
+            <option value="deponentes">Deponentes</option>
+          </select>
+        </label>
+        <label>Conjugación
+          <select id="filtro-conj">
+            <option value="">Todas</option>
+            <option value="1">1.ª</option>
+            <option value="2">2.ª</option>
+            <option value="3">3.ª</option>
+            <option value="3io">3.ª en -iō</option>
+            <option value="4">4.ª</option>
+            <option value="irregular">Irregular</option>
+          </select>
+        </label>
+        <label>Tipo
+          <select id="filtro-tipo">
+            <option value="">Todos</option>
+            <option value="regular">Regular</option>
+            <option value="deponente">Deponente</option>
+            <option value="semideponente">Semideponente</option>
+            <option value="irregular">Irregular</option>
+          </select>
+        </label>
+        <button type="button" class="boton" data-accion="menu">Volver</button>
+      </div>
+      <p id="consulta-cuenta"></p>
+      <div id="consulta-lista" class="lista"></div>
+    </section>
+
+    <section id="vista-resultado" hidden>
+      <div id="resultado-cuerpo" class="dialogo resultado"></div>
+    </section>
+
+    <footer id="teclado" hidden>
+      <form id="forma-fase2" class="forma-fase2" hidden>
+        <label class="escrito-etiqueta" for="escrito">Escribe la forma</label>
+        <input id="escrito" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Forma o desinencia" lang="la">
+        <button type="submit" class="boton principal">Comprobar</button>
+      </form>
+      <div id="teclas" class="teclas"></div>
+      <p id="atajos" class="atajos">Teclas 1 a 6. Espacio pausa. Esc menú.</p>
+    </footer>
+  </div>
+  <script src="verbos-juego.js"></script>
+  <script src="verbos-app.js"></script>
+</body>
+</html>

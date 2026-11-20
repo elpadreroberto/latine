@@ -80,6 +80,20 @@ h1 {
   color: var(--amber);
 }
 #estado { margin: .1rem 0 0; color: var(--muted); font-size: .92rem; }
+.materia { display: flex; gap: .35rem; margin-top: .28rem; }
+.materia a {
+  color: var(--muted);
+  text-decoration: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: .08rem .55rem;
+  font-size: .8rem;
+  font-weight: 700;
+}
+.materia a[aria-current="page"] { color: var(--amber-ink); background: var(--amber); border-color: transparent; }
+.recorte { margin: 0 0 .7rem; }
+.tecla:disabled { opacity: .38; cursor: not-allowed; }
+.tecla .forma { font-size: .95rem; line-height: 1.15; overflow-wrap: anywhere; }
 
 .controles, .puntuacion { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
 .boton, .nivel, .tecla, .tarjeta-abre {
@@ -358,7 +372,7 @@ td.marca, th.marca { background: rgba(230, 179, 90, .2); color: var(--amber); fo
 .tecla .num { font-size: 1.55rem; font-weight: 700; line-height: 1; }
 .tecla .nombre { font-weight: 700; }
 .tecla .signo { color: var(--muted); font-size: .95rem; }
-.tecla.ok { background: #14573a; }
+.tecla.ok, .tecla.revelada { background: #14573a; }
 .tecla.mal { background: #6d2a38; }
 .forma-fase2 {
   display: flex;

@@ -112,7 +112,11 @@ function pintarFases() {
 }
 
 function guardarAjustes() {
-  escribir(AJUSTES, { sonido: state.sonido, velocidad: state.velocidad, fase: state.fase });
+  const previos = leer(AJUSTES, {});
+  previos.sonido = state.sonido;
+  previos.velocidad = state.velocidad;
+  previos.fase = state.fase;
+  escribir(AJUSTES, previos);
 }
 
 function pintarTecladoModo() {

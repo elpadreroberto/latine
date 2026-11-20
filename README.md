@@ -16,10 +16,22 @@ Página: https://elpadreroberto.github.io/latine/
 
 La **consulta** abre las 450 palabras, con búsqueda en latín o en español. Puedes escribir sin macrones y sin tildes.
 
+## Verbos
+
+La página de verbos está en [https://elpadreroberto.github.io/latine/verbos.html](https://elpadreroberto.github.io/latine/verbos.html).
+
+1. Fase 1: baja una forma y pulsas la persona, del 1 al 6. Arriba van 4, 5 y 6. Abajo, 1, 2 y 3.
+2. Fase 2: baja el enunciado y la persona. Escribes la forma o la desinencia, o la eliges en las seis teclas.
+3. Puedes cambiar la voz, el modo y el tiempo antes de jugar. El presente de indicativo activo es el recorte inicial.
+4. Los deponentes están guardados en la voz activa. Los intransitivos no traen pasiva personal.
+5. **verbos.json** trae 1000 verbos. Los paradigmas se usan tal como están en el archivo.
+
 ## Archivos
 
-- `index.html`, `estilos.css`, `app.js`: la página.
-- `juego.js`: las reglas (mazo, acierto, búsqueda).
+- `index.html`, `estilos.css`, `app.js`: la página de los sustantivos.
+- `juego.js`: las reglas de los casos (mazo, acierto, búsqueda).
 - `vocabulario.json`: 450 sustantivos, 90 por declinación, con el paradigma tal como está en el archivo.
+- `verbos.html`, `verbos-app.js`, `verbos-juego.js`: la página de los verbos.
+- `verbos.json`: 1000 verbos, con el paradigma tal como está en el archivo.
 
 La página necesita servir esos archivos juntos. En GitHub Pages ya quedan en la misma carpeta.
